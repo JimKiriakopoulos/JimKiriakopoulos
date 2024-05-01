@@ -1,8 +1,8 @@
 - 👋 Hi, I’m @JimKiriakopoulos
 - 👀 I’m interested in create website
 - 🌱 I’m currently learning  create app
-- 💞️ I’m not looking to collaborate  now
-- 📫 How to reach me in the New good Δημήτρης Κυριακόπουλος(https://jimkiriakopoulos.wordpress.com)
+- 💞️ I’m  looking to collaborate  now
+- 📫 How to reach me in https://jimkiriakopoulos.wordpress.com,https://www.jimkiriakopoulos.com.gr,https://dimitriskiriakopoulos992.wordpress.com,https://www.traditionallyshop.jimkiriakopoulos.com.gr
 - 😄 Pronouns: he is very good
 - ⚡ Fun fact: i am very fun in interested in create website and interested in create app
 
