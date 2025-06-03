@@ -1,3 +1,5 @@
+"""Simple command-line number guessing game with optional colors."""
+
 import argparse
 import random
 from typing import List, Optional
@@ -6,7 +8,7 @@ try:
     from colorama import Fore, init
 except ModuleNotFoundError:  # pragma: no cover - graceful fallback
     class Fore:
-        RED = GREEN = CYAN = ""
+        RED = GREEN = CYAN = MAGENTA = ""
 
     def init(*_args: object, **_kwargs: object) -> None:
         """Dummy init when colorama is not available."""
@@ -37,10 +39,14 @@ def print_banner() -> None:
     print(Fore.CYAN + banner_text)
 
 
-def play_game(min_value: int, max_value: int, max_attempts: Optional[int]) -> Optional[int]:
+def play_game(
+    min_value: int, max_value: int, max_attempts: Optional[int], cheat: bool = False
+) -> Optional[int]:
     """Run the guessing game and return attempts or None if failed."""
     number = random.randint(min_value, max_value)
     print(f"I'm thinking of a number between {min_value} and {max_value}.")
+    if cheat:
+        print(Fore.MAGENTA + f"(Cheat) Secret number is {number}")
     attempts = 0
     while True:
         guess_int = get_guess("Take a guess: ")
@@ -68,6 +74,11 @@ def main() -> None:
     parser.add_argument(
         "--attempts", type=int, default=0, help="Maximum attempts. 0 for unlimited."
     )
+    parser.add_argument(
+        "--cheat",
+        action="store_true",
+        help="Display the secret number at the start for debugging.",
+    )
     args = parser.parse_args()
 
     if args.min >= args.max:
@@ -76,12 +87,15 @@ def main() -> None:
     print_banner()
     max_attempts = args.attempts if args.attempts > 0 else None
     results: List[Optional[int]] = []
-    while True:
-        result = play_game(args.min, args.max, max_attempts)
-        results.append(result)
-        again = input("Play again? (y/n) ").strip().lower()
-        if not again.startswith("y"):
-            break
+    try:
+        while True:
+            result = play_game(args.min, args.max, max_attempts, args.cheat)
+            results.append(result)
+            again = input("Play again? (y/n) ").strip().lower()
+            if not again.startswith("y"):
+                break
+    except KeyboardInterrupt:
+        print("\nInterrupted.")
 
     if results:
         print("\nGame summary:")
@@ -93,7 +107,10 @@ def main() -> None:
         wins = sum(1 for r in results if r is not None)
         if wins:
             avg = sum(r for r in results if r is not None) / wins
+            print(Fore.GREEN + f"You won {wins} out of {len(results)} games!")
             print(f"Average attempts on wins: {avg:.1f}")
+        else:
+            print(Fore.RED + "No wins this time.")
     print("Thanks for playing!")
 
 
