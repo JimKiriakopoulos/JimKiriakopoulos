@@ -13,6 +13,12 @@ Run `python3 guess_the_number.py` to play a simple number guessing game.
 The game shows a banner with colors when it starts and gives feedback after each guess.
 You can customize the range and number of attempts:
 
+First, install the requirement:
+
+```bash
+pip install -r requirements.txt
+```
+
 ```bash
 python3 guess_the_number.py --min 1 --max 50 --attempts 5
 ```

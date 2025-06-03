@@ -2,7 +2,15 @@ import argparse
 import random
 from typing import List, Optional
 
-from colorama import Fore, init
+try:
+    from colorama import Fore, init
+except ModuleNotFoundError:  # pragma: no cover - graceful fallback
+    class Fore:
+        RED = GREEN = CYAN = ""
+
+    def init(*_args: object, **_kwargs: object) -> None:
+        """Dummy init when colorama is not available."""
+        pass
 
 init(autoreset=True)
 
@@ -25,7 +33,8 @@ def print_banner() -> None:
         "║        GUESS THE NUMBER       ║\n"
         "╚══════════════════════════════╝"
     )
-    print(Fore.CYAN + banner)
+    banner_text = "".join(banner)
+    print(Fore.CYAN + banner_text)
 
 
 def play_game(min_value: int, max_value: int, max_attempts: Optional[int]) -> Optional[int]:
