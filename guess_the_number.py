@@ -1,5 +1,6 @@
 import argparse
 import random
+from typing import Optional
 
 
 def get_guess(prompt: str) -> int:
@@ -12,7 +13,17 @@ def get_guess(prompt: str) -> int:
             print("Please enter a valid integer.")
 
 
-def play_game(min_value: int, max_value: int, max_attempts: int | None) -> int | None:
+def print_banner() -> None:
+    """Display a simple banner for the game."""
+    banner = (
+        "==========================\n"
+        "   GUESS THE NUMBER\n"
+        "=========================="
+    )
+    print(banner)
+
+
+def play_game(min_value: int, max_value: int, max_attempts: Optional[int]) -> Optional[int]:
     """Run the guessing game and return attempts or None if failed."""
     number = random.randint(min_value, max_value)
     print(f"I'm thinking of a number between {min_value} and {max_value}.")
@@ -41,6 +52,7 @@ def main() -> None:
     )
     args = parser.parse_args()
 
+    print_banner()
     max_attempts = args.attempts if args.attempts > 0 else None
     while True:
         play_game(args.min, args.max, max_attempts)

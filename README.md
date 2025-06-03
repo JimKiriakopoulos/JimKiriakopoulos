@@ -10,6 +10,7 @@
 
 ## Guess the Number Game
 Run `python3 guess_the_number.py` to play a simple number guessing game.
+The game shows a small banner when it starts.
 You can customize the range and number of attempts:
 
 ```bash
