@@ -17,11 +17,13 @@ except ModuleNotFoundError:  # pragma: no cover - graceful fallback
     COLORAMA_AVAILABLE = False
 
     class Fore:
+        """Fallback color constants when ``colorama`` isn't installed."""
+
         RED = GREEN = CYAN = MAGENTA = ""
 
     def init(*_args: object, **_kwargs: object) -> None:
         """Dummy init when colorama is not available."""
-        pass
+        return None
 
 init(autoreset=True)
 
@@ -109,7 +111,7 @@ def play_game(
     attempts = 0
     while True:
         guess_int = get_guess(messages["prompt"], messages["invalid"])
-        if not (min_value <= guess_int <= max_value):
+        if not min_value <= guess_int <= max_value:
             print(Fore.RED + messages["out_of_range"].format(min=min_value, max=max_value))
             continue
         attempts += 1
@@ -125,11 +127,11 @@ def play_game(
             if remaining <= 0:
                 print(Fore.RED + messages["out_of_attempts"].format(number=number))
                 return None
-            else:
-                print(messages["attempts_remaining"].format(remaining=remaining))
+            print(messages["attempts_remaining"].format(remaining=remaining))
 
 
 def main() -> None:
+    """Parse arguments and launch the guessing game."""
     parser = argparse.ArgumentParser(description="Play a number guessing game.")
     parser.add_argument("--min", type=int, default=1, help="Minimum possible number.")
     parser.add_argument("--max", type=int, default=100, help="Maximum possible number.")
