@@ -127,8 +127,7 @@ def play_game(
         guess_int = get_guess(messages["prompt"], messages["invalid"])
         if not min_value <= guess_int <= max_value:
             print(
-                Fore.RED
-                + messages["out_of_range"].format(min=min_value, max=max_value)
+                Fore.RED + messages["out_of_range"].format(min=min_value, max=max_value)
             )
             continue
         attempts += 1
@@ -142,25 +141,16 @@ def play_game(
         if max_attempts:
             remaining = max_attempts - attempts
             if remaining <= 0:
-                print(
-                    Fore.RED
-                    + messages["out_of_attempts"].format(number=number)
-                )
+                print(Fore.RED + messages["out_of_attempts"].format(number=number))
                 return GameResult(False, attempts)
             print(messages["attempts_remaining"].format(remaining=remaining))
 
 
 def main() -> None:
     """Parse arguments and launch the guessing game."""
-    parser = argparse.ArgumentParser(
-        description="Play a number guessing game."
-    )
-    parser.add_argument(
-        "--min", type=int, default=1, help="Minimum possible number."
-    )
-    parser.add_argument(
-        "--max", type=int, default=100, help="Maximum possible number."
-    )
+    parser = argparse.ArgumentParser(description="Play a number guessing game.")
+    parser.add_argument("--min", type=int, default=1, help="Minimum possible number.")
+    parser.add_argument("--max", type=int, default=100, help="Maximum possible number.")
     parser.add_argument(
         "--attempts",
         type=int,
@@ -231,9 +221,7 @@ def main() -> None:
     played = 0
     try:
         while True:
-            result = play_game(
-                args.min, args.max, max_attempts, args.cheat, messages
-            )
+            result = play_game(args.min, args.max, max_attempts, args.cheat, messages)
             results.append(result)
             played += 1
             if args.games:
@@ -257,8 +245,7 @@ def main() -> None:
         if wins:
             avg = sum(r.attempts for r in results if r.won) / wins
             print(
-                Fore.GREEN
-                + messages["won_stats"].format(wins=wins, total=len(results))
+                Fore.GREEN + messages["won_stats"].format(wins=wins, total=len(results))
             )
             print(messages["avg_attempts"].format(avg=avg))
         else:
