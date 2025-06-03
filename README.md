@@ -10,12 +10,13 @@
 
 ## Guess the Number Game
 Run `python3 guess_the_number.py` to play a simple number guessing game.
-The game shows a small banner when it starts.
+The game shows a banner with colors when it starts and gives feedback after each guess.
 You can customize the range and number of attempts:
 
 ```bash
 python3 guess_the_number.py --min 1 --max 50 --attempts 5
 ```
+At the end of your session, a small summary with your results will be displayed.
 
 <!---
 JimKiriakopoulos/JimKiriakopoulos is a ✨ special ✨ repository because its `README.md` (this file) appears on your GitHub profile.

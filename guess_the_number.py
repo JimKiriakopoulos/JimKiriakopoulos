@@ -1,6 +1,10 @@
 import argparse
 import random
-from typing import Optional
+from typing import List, Optional
+
+from colorama import Fore, init
+
+init(autoreset=True)
 
 
 def get_guess(prompt: str) -> int:
@@ -16,11 +20,12 @@ def get_guess(prompt: str) -> int:
 def print_banner() -> None:
     """Display a simple banner for the game."""
     banner = (
-        "==========================\n"
-        "   GUESS THE NUMBER\n"
-        "=========================="
+        "\n"
+        "╔══════════════════════════════╗\n"
+        "║        GUESS THE NUMBER       ║\n"
+        "╚══════════════════════════════╝"
     )
-    print(banner)
+    print(Fore.CYAN + banner)
 
 
 def play_game(min_value: int, max_value: int, max_attempts: Optional[int]) -> Optional[int]:
@@ -32,15 +37,19 @@ def play_game(min_value: int, max_value: int, max_attempts: Optional[int]) -> Op
         guess_int = get_guess("Take a guess: ")
         attempts += 1
         if guess_int < number:
-            print("Too low!")
+            print(Fore.RED + "Too low!")
         elif guess_int > number:
-            print("Too high!")
+            print(Fore.RED + "Too high!")
         else:
-            print(f"Congratulations! You guessed the number in {attempts} attempts.")
+            print(Fore.GREEN + f"Congratulations! You guessed the number in {attempts} attempts.")
             return attempts
-        if max_attempts and attempts >= max_attempts:
-            print(f"Out of attempts! The correct number was {number}.")
-            return None
+        if max_attempts:
+            remaining = max_attempts - attempts
+            if remaining <= 0:
+                print(Fore.RED + f"Out of attempts! The correct number was {number}.")
+                return None
+            else:
+                print(f"{remaining} attempts remaining.")
 
 
 def main() -> None:
@@ -52,13 +61,31 @@ def main() -> None:
     )
     args = parser.parse_args()
 
+    if args.min >= args.max:
+        parser.error("--min must be less than --max")
+
     print_banner()
     max_attempts = args.attempts if args.attempts > 0 else None
+    results: List[Optional[int]] = []
     while True:
-        play_game(args.min, args.max, max_attempts)
+        result = play_game(args.min, args.max, max_attempts)
+        results.append(result)
         again = input("Play again? (y/n) ").strip().lower()
         if not again.startswith("y"):
             break
+
+    if results:
+        print("\nGame summary:")
+        for i, r in enumerate(results, 1):
+            if r is None:
+                print(f"Game {i}: lost")
+            else:
+                print(f"Game {i}: won in {r} attempts")
+        wins = sum(1 for r in results if r is not None)
+        if wins:
+            avg = sum(r for r in results if r is not None) / wins
+            print(f"Average attempts on wins: {avg:.1f}")
+    print("Thanks for playing!")
 
 
 if __name__ == "__main__":
