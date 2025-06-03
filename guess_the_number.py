@@ -1,4 +1,7 @@
-"""Simple command-line number guessing game with optional colors."""
+"""Simple command-line number guessing game with optional colors.
+
+Use ``--seed`` for reproducible results when testing.
+"""
 
 import argparse
 import random
@@ -146,7 +149,15 @@ def main() -> None:
         default="en",
         help="Language for messages (en or el).",
     )
+    parser.add_argument(
+        "--seed",
+        type=int,
+        help="Optional random seed for reproducible sessions.",
+    )
     args = parser.parse_args()
+
+    if args.seed is not None:
+        random.seed(args.seed)
 
     if args.attempts < 0:
         parser.error("--attempts must be non-negative")
