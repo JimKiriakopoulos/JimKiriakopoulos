@@ -18,7 +18,3 @@ python3 guess_the_number.py --min 1 --max 50 --attempts 5 --cheat --lang el
 ```
 At the end of your session, a colorized summary with your results will be displayed.
 
-<!---
-JimKiriakopoulos/JimKiriakopoulos is a ✨ special ✨ repository because its `README.md` (this file) appears on your GitHub profile.
-You can click the Preview link to take a look at your changes.
---->
