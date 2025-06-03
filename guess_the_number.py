@@ -236,11 +236,13 @@ def main() -> None:
             )
             results.append(result)
             played += 1
-            if args.games and played >= args.games:
-                break
-            again = input(messages["play_again"]).strip().lower()
-            if not again.startswith("y"):
-                break
+            if args.games:
+                if played >= args.games:
+                    break
+            else:
+                again = input(messages["play_again"]).strip().lower()
+                if not again.startswith("y"):
+                    break
     except (KeyboardInterrupt, EOFError):
         print(messages["interrupted"])
 
