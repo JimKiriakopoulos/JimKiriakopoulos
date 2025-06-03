@@ -2,17 +2,29 @@
 """Simple command-line number guessing game with optional colors.
 
 Use ``--seed`` for reproducible results when testing. The ``--games`` option
-plays multiple rounds automatically.
+plays multiple rounds automatically. ``--banner`` lets you customize the title
+shown at start.
 """
 
 import argparse
 import random
+from dataclasses import dataclass
 from typing import Dict, List, Optional
 
-__version__ = "1.1.0"
+
+@dataclass
+class GameResult:
+    """Outcome of a single game round."""
+
+    won: bool
+    attempts: int
+
+
+__version__ = "1.2.0"
 
 try:
     from colorama import Fore, init
+
     COLORAMA_AVAILABLE = True
 except ModuleNotFoundError:  # pragma: no cover - graceful fallback
     COLORAMA_AVAILABLE = False
@@ -25,6 +37,7 @@ except ModuleNotFoundError:  # pragma: no cover - graceful fallback
     def init(*_args: object, **_kwargs: object) -> None:
         """Dummy init when colorama is not available."""
         return None
+
 
 init(autoreset=True)
 
@@ -103,8 +116,8 @@ def play_game(
     max_attempts: Optional[int],
     cheat: bool,
     messages: Dict[str, str],
-) -> Optional[int]:
-    """Run the guessing game and return attempts or None if failed."""
+) -> GameResult:
+    """Run one round and report whether the player won and how many attempts."""
     number = random.randint(min_value, max_value)
     print(messages["thinking"].format(min=min_value, max=max_value))
     if cheat:
@@ -113,7 +126,10 @@ def play_game(
     while True:
         guess_int = get_guess(messages["prompt"], messages["invalid"])
         if not min_value <= guess_int <= max_value:
-            print(Fore.RED + messages["out_of_range"].format(min=min_value, max=max_value))
+            print(
+                Fore.RED
+                + messages["out_of_range"].format(min=min_value, max=max_value)
+            )
             continue
         attempts += 1
         if guess_int < number:
@@ -122,22 +138,34 @@ def play_game(
             print(Fore.RED + messages["too_high"])
         else:
             print(Fore.GREEN + messages["congrats"].format(attempts=attempts))
-            return attempts
+            return GameResult(True, attempts)
         if max_attempts:
             remaining = max_attempts - attempts
             if remaining <= 0:
-                print(Fore.RED + messages["out_of_attempts"].format(number=number))
-                return None
+                print(
+                    Fore.RED
+                    + messages["out_of_attempts"].format(number=number)
+                )
+                return GameResult(False, attempts)
             print(messages["attempts_remaining"].format(remaining=remaining))
 
 
 def main() -> None:
     """Parse arguments and launch the guessing game."""
-    parser = argparse.ArgumentParser(description="Play a number guessing game.")
-    parser.add_argument("--min", type=int, default=1, help="Minimum possible number.")
-    parser.add_argument("--max", type=int, default=100, help="Maximum possible number.")
+    parser = argparse.ArgumentParser(
+        description="Play a number guessing game."
+    )
     parser.add_argument(
-        "--attempts", type=int, default=0, help="Maximum attempts. 0 for unlimited."
+        "--min", type=int, default=1, help="Minimum possible number."
+    )
+    parser.add_argument(
+        "--max", type=int, default=100, help="Maximum possible number."
+    )
+    parser.add_argument(
+        "--attempts",
+        type=int,
+        default=0,
+        help="Maximum attempts. 0 for unlimited.",
     )
     parser.add_argument(
         "--cheat",
@@ -159,6 +187,11 @@ def main() -> None:
         "--seed",
         type=int,
         help="Optional random seed for reproducible sessions.",
+    )
+    parser.add_argument(
+        "--banner",
+        type=str,
+        help="Custom banner text shown at startup.",
     )
     parser.add_argument(
         "--games",
@@ -191,9 +224,10 @@ def main() -> None:
             setattr(Fore, attr, "")
 
     messages = MESSAGES[args.lang]
-    print_banner(messages["banner"])
+    banner_text = args.banner if args.banner else messages["banner"]
+    print_banner(banner_text)
     max_attempts = args.attempts if args.attempts > 0 else None
-    results: List[Optional[int]] = []
+    results: List[GameResult] = []
     played = 0
     try:
         while True:
@@ -213,14 +247,17 @@ def main() -> None:
     if results:
         print(messages["summary"])
         for i, r in enumerate(results, 1):
-            if r is None:
+            if not r.won:
                 print(messages["game_lost"].format(i=i))
             else:
-                print(messages["game_won"].format(i=i, attempts=r))
-        wins = sum(1 for r in results if r is not None)
+                print(messages["game_won"].format(i=i, attempts=r.attempts))
+        wins = sum(1 for r in results if r.won)
         if wins:
-            avg = sum(r for r in results if r is not None) / wins
-            print(Fore.GREEN + messages["won_stats"].format(wins=wins, total=len(results)))
+            avg = sum(r.attempts for r in results if r.won) / wins
+            print(
+                Fore.GREEN
+                + messages["won_stats"].format(wins=wins, total=len(results))
+            )
             print(messages["avg_attempts"].format(avg=avg))
         else:
             print(Fore.RED + messages["no_wins"])
