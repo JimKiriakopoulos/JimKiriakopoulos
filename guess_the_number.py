@@ -2,7 +2,7 @@
 
 import argparse
 import random
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 try:
     from colorama import Fore, init
@@ -17,54 +17,104 @@ except ModuleNotFoundError:  # pragma: no cover - graceful fallback
 init(autoreset=True)
 
 
-def get_guess(prompt: str) -> int:
+MESSAGES: Dict[str, Dict[str, str]] = {
+    "en": {
+        "banner": "GUESS THE NUMBER",
+        "thinking": "I'm thinking of a number between {min} and {max}.",
+        "cheat": "(Cheat) Secret number is {number}",
+        "prompt": "Take a guess: ",
+        "invalid": "Please enter a valid integer.",
+        "too_low": "Too low!",
+        "too_high": "Too high!",
+        "congrats": "Congratulations! You guessed the number in {attempts} attempts.",
+        "out_of_attempts": "Out of attempts! The correct number was {number}.",
+        "attempts_remaining": "{remaining} attempts remaining.",
+        "play_again": "Play again? (y/n) ",
+        "summary": "\nGame summary:",
+        "game_lost": "Game {i}: lost",
+        "game_won": "Game {i}: won in {attempts} attempts",
+        "won_stats": "You won {wins} out of {total} games!",
+        "avg_attempts": "Average attempts on wins: {avg:.1f}",
+        "no_wins": "No wins this time.",
+        "thanks": "Thanks for playing!",
+        "interrupted": "\nInterrupted.",
+    },
+    "el": {
+        "banner": "ΜΑΝΤΕΨΕ ΤΟΝ ΑΡΙΘΜΟ",
+        "thinking": "Σκέφτομαι έναν αριθμό ανάμεσα στο {min} και {max}.",
+        "cheat": "(Cheat) Το μυστικό νούμερο είναι {number}",
+        "prompt": "Μάντεψε: ",
+        "invalid": "Παρακαλώ γράψε έναν έγκυρο ακέραιο.",
+        "too_low": "Πολύ μικρός!",
+        "too_high": "Πολύ μεγάλος!",
+        "congrats": "Μπράβο! Το βρήκες σε {attempts} προσπάθειες.",
+        "out_of_attempts": "Τέλος προσπαθειών! Ο σωστός αριθμός ήταν {number}.",
+        "attempts_remaining": "Απομένουν {remaining} προσπάθειες.",
+        "play_again": "Θες να παίξεις ξανά; (y/n) ",
+        "summary": "\nΠερίληψη παιχνιδιού:",
+        "game_lost": "Παιχνίδι {i}: έχασες",
+        "game_won": "Παιχνίδι {i}: νίκη σε {attempts} προσπάθειες",
+        "won_stats": "Κέρδισες {wins} από τα {total} παιχνίδια!",
+        "avg_attempts": "Μέσος όρος προσπαθειών στις νίκες: {avg:.1f}",
+        "no_wins": "Καμία νίκη αυτή τη φορά.",
+        "thanks": "Ευχαριστούμε για το παιχνίδι!",
+        "interrupted": "\nΔιακόπηκε.",
+    },
+}
+
+
+def get_guess(prompt: str, error_msg: str) -> int:
     """Prompt the user until they enter a valid integer."""
     while True:
         guess = input(prompt)
         try:
             return int(guess)
         except ValueError:
-            print("Please enter a valid integer.")
+            print(error_msg)
 
 
-def print_banner() -> None:
+def print_banner(text: str) -> None:
     """Display a simple banner for the game."""
     banner = (
-        "\n"
-        "╔══════════════════════════════╗\n"
-        "║        GUESS THE NUMBER       ║\n"
-        "╚══════════════════════════════╝"
+        "\n",
+        "╔══════════════════════════════╗\n",
+        f"║        {text.center(20)}       ║\n",
+        "╚══════════════════════════════╝",
     )
     banner_text = "".join(banner)
     print(Fore.CYAN + banner_text)
 
 
 def play_game(
-    min_value: int, max_value: int, max_attempts: Optional[int], cheat: bool = False
+    min_value: int,
+    max_value: int,
+    max_attempts: Optional[int],
+    cheat: bool,
+    messages: Dict[str, str],
 ) -> Optional[int]:
     """Run the guessing game and return attempts or None if failed."""
     number = random.randint(min_value, max_value)
-    print(f"I'm thinking of a number between {min_value} and {max_value}.")
+    print(messages["thinking"].format(min=min_value, max=max_value))
     if cheat:
-        print(Fore.MAGENTA + f"(Cheat) Secret number is {number}")
+        print(Fore.MAGENTA + messages["cheat"].format(number=number))
     attempts = 0
     while True:
-        guess_int = get_guess("Take a guess: ")
+        guess_int = get_guess(messages["prompt"], messages["invalid"])
         attempts += 1
         if guess_int < number:
-            print(Fore.RED + "Too low!")
+            print(Fore.RED + messages["too_low"])
         elif guess_int > number:
-            print(Fore.RED + "Too high!")
+            print(Fore.RED + messages["too_high"])
         else:
-            print(Fore.GREEN + f"Congratulations! You guessed the number in {attempts} attempts.")
+            print(Fore.GREEN + messages["congrats"].format(attempts=attempts))
             return attempts
         if max_attempts:
             remaining = max_attempts - attempts
             if remaining <= 0:
-                print(Fore.RED + f"Out of attempts! The correct number was {number}.")
+                print(Fore.RED + messages["out_of_attempts"].format(number=number))
                 return None
             else:
-                print(f"{remaining} attempts remaining.")
+                print(messages["attempts_remaining"].format(remaining=remaining))
 
 
 def main() -> None:
@@ -79,39 +129,46 @@ def main() -> None:
         action="store_true",
         help="Display the secret number at the start for debugging.",
     )
+    parser.add_argument(
+        "--lang",
+        choices=sorted(MESSAGES.keys()),
+        default="en",
+        help="Language for messages (en or el).",
+    )
     args = parser.parse_args()
 
     if args.min >= args.max:
         parser.error("--min must be less than --max")
 
-    print_banner()
+    messages = MESSAGES[args.lang]
+    print_banner(messages["banner"])
     max_attempts = args.attempts if args.attempts > 0 else None
     results: List[Optional[int]] = []
     try:
         while True:
-            result = play_game(args.min, args.max, max_attempts, args.cheat)
+            result = play_game(args.min, args.max, max_attempts, args.cheat, messages)
             results.append(result)
-            again = input("Play again? (y/n) ").strip().lower()
+            again = input(messages["play_again"]).strip().lower()
             if not again.startswith("y"):
                 break
     except KeyboardInterrupt:
-        print("\nInterrupted.")
+        print(messages["interrupted"])
 
     if results:
-        print("\nGame summary:")
+        print(messages["summary"])
         for i, r in enumerate(results, 1):
             if r is None:
-                print(f"Game {i}: lost")
+                print(messages["game_lost"].format(i=i))
             else:
-                print(f"Game {i}: won in {r} attempts")
+                print(messages["game_won"].format(i=i, attempts=r))
         wins = sum(1 for r in results if r is not None)
         if wins:
             avg = sum(r for r in results if r is not None) / wins
-            print(Fore.GREEN + f"You won {wins} out of {len(results)} games!")
-            print(f"Average attempts on wins: {avg:.1f}")
+            print(Fore.GREEN + messages["won_stats"].format(wins=wins, total=len(results)))
+            print(messages["avg_attempts"].format(avg=avg))
         else:
-            print(Fore.RED + "No wins this time.")
-    print("Thanks for playing!")
+            print(Fore.RED + messages["no_wins"])
+    print(messages["thanks"])
 
 
 if __name__ == "__main__":
