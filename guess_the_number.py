@@ -207,7 +207,7 @@ def main() -> None:
             again = input(messages["play_again"]).strip().lower()
             if not again.startswith("y"):
                 break
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, EOFError):
         print(messages["interrupted"])
 
     if results:
