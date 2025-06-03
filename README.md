@@ -5,6 +5,9 @@
 - 📫 How to reach me in https://www.jimkiriakopoulos.com.gr
 - https://www.newsgood.jimkiriakopoulos.com.gr
 - https://www.traditionallyshop.jimkiriakopoulos.com.gr
+- https://www.bookshop.jimkiriakopoulos.com.gr
+- https://www.keopoleio.jimkiriakopoulos.com.gr
+- https://app.jimkiriakopoulos.com.gr
 - 😄 Pronouns: he is very good
 - ⚡ Fun fact: i am very fun in interested in create website and interested in create app
 
