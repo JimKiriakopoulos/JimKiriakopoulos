@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<products>
+    <product>
+        <name>Αφρόλουτρο</name>
+        <item>10</item>
+        <price>4.34</price>
+        <description>Αφρόλουτρο μεγάλης πολυεθνικής</description>
+        <category>Προσωπική Φροντίδα</category>
+        <product_code>AFR01</product_code>
+        <image>https://tse2.mm.bing.net/th/id/OIG2.wlSWUrKx8BZM5aL2Hc2g?r=0&o=5&pid=ImgGn</image>
+        <stock>100</stock>
+        <weight>0.4</weight>
+    </product>
+    <product>
+        <name>Οδοντόκρεμα</name>
+        <item>10</item>
+        <price>2.00</price>
+        <description>Οδοντόκρεμα μεγάλης πολυεθνικής</description>
+        <category>Προσωπική Φροντίδα</category>
+        <product_code>ODNT01</product_code>
+        <image>https://tse1.mm.bing.net/th/id/OIG2.baBPYZ3SQZ8uWnEtpVhI?r=0&o=5&pid=ImgGn</image>
+        <stock>200</stock>
+        <weight>0.075</weight>
+    </product>
+</products>
