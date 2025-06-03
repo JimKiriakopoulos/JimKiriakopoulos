@@ -23,6 +23,7 @@ MESSAGES: Dict[str, Dict[str, str]] = {
         "thinking": "I'm thinking of a number between {min} and {max}.",
         "cheat": "(Cheat) Secret number is {number}",
         "prompt": "Take a guess: ",
+        "out_of_range": "Guess a number between {min} and {max}.",
         "invalid": "Please enter a valid integer.",
         "too_low": "Too low!",
         "too_high": "Too high!",
@@ -44,6 +45,7 @@ MESSAGES: Dict[str, Dict[str, str]] = {
         "thinking": "Σκέφτομαι έναν αριθμό ανάμεσα στο {min} και {max}.",
         "cheat": "(Cheat) Το μυστικό νούμερο είναι {number}",
         "prompt": "Μάντεψε: ",
+        "out_of_range": "Μάντεψε αριθμό ανάμεσα στο {min} και {max}.",
         "invalid": "Παρακαλώ γράψε έναν έγκυρο ακέραιο.",
         "too_low": "Πολύ μικρός!",
         "too_high": "Πολύ μεγάλος!",
@@ -75,13 +77,11 @@ def get_guess(prompt: str, error_msg: str) -> int:
 
 def print_banner(text: str) -> None:
     """Display a simple banner for the game."""
-    banner = (
-        "\n",
-        "╔══════════════════════════════╗\n",
-        f"║        {text.center(20)}       ║\n",
-        "╚══════════════════════════════╝",
-    )
-    banner_text = "".join(banner)
+    width = 30  # inner width
+    top = "╔" + "═" * width + "╗"
+    middle = "║" + text.center(width) + "║"
+    bottom = "╚" + "═" * width + "╝"
+    banner_text = "\n" + "\n".join([top, middle, bottom])
     print(Fore.CYAN + banner_text)
 
 
@@ -100,6 +100,9 @@ def play_game(
     attempts = 0
     while True:
         guess_int = get_guess(messages["prompt"], messages["invalid"])
+        if not (min_value <= guess_int <= max_value):
+            print(Fore.RED + messages["out_of_range"].format(min=min_value, max=max_value))
+            continue
         attempts += 1
         if guess_int < number:
             print(Fore.RED + messages["too_low"])
@@ -136,6 +139,9 @@ def main() -> None:
         help="Language for messages (en or el).",
     )
     args = parser.parse_args()
+
+    if args.attempts < 0:
+        parser.error("--attempts must be non-negative")
 
     if args.min >= args.max:
         parser.error("--min must be less than --max")

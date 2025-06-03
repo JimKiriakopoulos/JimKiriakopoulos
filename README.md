@@ -1,12 +1,4 @@
-- 👋 Hi, I’m @JimKiriakopoulos
-- 👀 I’m interested in creating websites
-- 🌱 I’m currently learning to build apps
-- 💞️ I’m looking for a practical job now
-- 📫 How to reach me: https://www.jimkiriakopoulos.com.gr
-- https://www.newsgood.jimkiriakopoulos.com.gr
-- https://www.traditionallyshop.jimkiriakopoulos.com.gr
-- 😄 Pronouns: he/him
-- ⚡ Fun fact: I love creating websites and apps
+This repository hosts a small Python guessing game.
 
 ## Guess the Number Game
 Run `python3 guess_the_number.py` to play a colorful number guessing game.
