@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 """Simple command-line number guessing game with optional colors.
 
-Use ``--seed`` for reproducible results when testing.
+Use ``--seed`` for reproducible results when testing. The ``--games`` option
+plays multiple rounds automatically.
 """
 
 import argparse
 import random
 from typing import Dict, List, Optional
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 
 try:
     from colorama import Fore, init
@@ -160,6 +161,12 @@ def main() -> None:
         help="Optional random seed for reproducible sessions.",
     )
     parser.add_argument(
+        "--games",
+        type=int,
+        default=0,
+        help="Automatically play this many games in a row.",
+    )
+    parser.add_argument(
         "--version",
         action="version",
         version=f"%(prog)s {__version__}",
@@ -173,6 +180,9 @@ def main() -> None:
     if args.attempts < 0:
         parser.error("--attempts must be non-negative")
 
+    if args.games < 0:
+        parser.error("--games must be non-negative")
+
     if args.min >= args.max:
         parser.error("--min must be less than --max")
 
@@ -184,10 +194,16 @@ def main() -> None:
     print_banner(messages["banner"])
     max_attempts = args.attempts if args.attempts > 0 else None
     results: List[Optional[int]] = []
+    played = 0
     try:
         while True:
-            result = play_game(args.min, args.max, max_attempts, args.cheat, messages)
+            result = play_game(
+                args.min, args.max, max_attempts, args.cheat, messages
+            )
             results.append(result)
+            played += 1
+            if args.games and played >= args.games:
+                break
             again = input(messages["play_again"]).strip().lower()
             if not again.startswith("y"):
                 break

@@ -7,6 +7,7 @@ The `--cheat` option reveals the secret number for testing, and `--lang` lets yo
 Pass `--no-color` if you prefer plain text output.
 Use `--seed` to reproduce games with a fixed random seed.
 Run `--version` to see the current game version.
+Set `--games` to automatically play multiple rounds without prompts.
 The banner width adapts automatically to fit the chosen language.
 
 First, install the requirement:
@@ -17,6 +18,10 @@ pip install -r requirements.txt
 
 ```bash
 python3 guess_the_number.py --min 1 --max 50 --attempts 5 --cheat --lang el --seed 42
+```
+Run several rounds automatically:
+```bash
+python3 guess_the_number.py --games 3
 ```
 At the end of your session, a colorized summary with your results will be displayed.
 
