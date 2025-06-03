@@ -4,6 +4,8 @@ This repository hosts a small Python guessing game.
 Run `python3 guess_the_number.py` to play a colorful number guessing game.
 Use `--min` and `--max` to set the range and `--attempts` to limit guesses.
 The `--cheat` option reveals the secret number for testing, and `--lang` lets you play in English or Greek.
+Pass `--no-color` if you prefer plain text output.
+The banner width adapts automatically to fit the chosen language.
 
 First, install the requirement:
 

@@ -6,7 +6,10 @@ from typing import Dict, List, Optional
 
 try:
     from colorama import Fore, init
+    COLORAMA_AVAILABLE = True
 except ModuleNotFoundError:  # pragma: no cover - graceful fallback
+    COLORAMA_AVAILABLE = False
+
     class Fore:
         RED = GREEN = CYAN = MAGENTA = ""
 
@@ -75,9 +78,9 @@ def get_guess(prompt: str, error_msg: str) -> int:
             print(error_msg)
 
 
-def print_banner(text: str) -> None:
+def print_banner(text: str, min_width: int = 30) -> None:
     """Display a simple banner for the game."""
-    width = 30  # inner width
+    width = max(min_width, len(text) + 4)
     top = "╔" + "═" * width + "╗"
     middle = "║" + text.center(width) + "║"
     bottom = "╚" + "═" * width + "╝"
@@ -133,6 +136,11 @@ def main() -> None:
         help="Display the secret number at the start for debugging.",
     )
     parser.add_argument(
+        "--no-color",
+        action="store_true",
+        help="Disable colored output even if colorama is installed.",
+    )
+    parser.add_argument(
         "--lang",
         choices=sorted(MESSAGES.keys()),
         default="en",
@@ -145,6 +153,10 @@ def main() -> None:
 
     if args.min >= args.max:
         parser.error("--min must be less than --max")
+
+    if args.no_color or not COLORAMA_AVAILABLE:
+        for attr in ("RED", "GREEN", "CYAN", "MAGENTA"):
+            setattr(Fore, attr, "")
 
     messages = MESSAGES[args.lang]
     print_banner(messages["banner"])
