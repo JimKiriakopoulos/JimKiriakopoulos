@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """Simple command-line number guessing game with optional colors.
 
 Use ``--seed`` for reproducible results when testing.
@@ -6,6 +7,8 @@ Use ``--seed`` for reproducible results when testing.
 import argparse
 import random
 from typing import Dict, List, Optional
+
+__version__ = "1.0.0"
 
 try:
     from colorama import Fore, init
@@ -153,6 +156,12 @@ def main() -> None:
         "--seed",
         type=int,
         help="Optional random seed for reproducible sessions.",
+    )
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"%(prog)s {__version__}",
+        help="Show program's version number and exit.",
     )
     args = parser.parse_args()
 

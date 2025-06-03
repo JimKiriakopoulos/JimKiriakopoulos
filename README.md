@@ -6,6 +6,7 @@ Use `--min` and `--max` to set the range and `--attempts` to limit guesses.
 The `--cheat` option reveals the secret number for testing, and `--lang` lets you play in English or Greek.
 Pass `--no-color` if you prefer plain text output.
 Use `--seed` to reproduce games with a fixed random seed.
+Run `--version` to see the current game version.
 The banner width adapts automatically to fit the chosen language.
 
 First, install the requirement:
