@@ -23,3 +23,9 @@ Install dependencies with:
 ```bash
 pip install -r requirements.txt
 ```
+
+Run the automated tests with:
+
+```bash
+python3 -m unittest -v
+```
