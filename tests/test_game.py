@@ -60,6 +60,12 @@ class GuessGameTest(unittest.TestCase):
         )
         self.assertIn("Secret number is", result.stdout)
 
+    def test_x_plus_x2(self):
+        """Simple arithmetic test demonstrating x + x2 calculation."""
+        x = 3
+        x2 = 4
+        self.assertEqual(x + x2, 7)
+
 
 if __name__ == "__main__":
     unittest.main()
