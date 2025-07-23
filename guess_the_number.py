@@ -42,6 +42,23 @@ except ModuleNotFoundError:  # pragma: no cover - graceful fallback
 init(autoreset=True)
 
 
+ASCII_ART: Dict[str, List[str]] = {
+    "en": [
+        "  ____  _   _ ____  ____   _    ____  _   _ _   _ _____ ____  ",
+        " / ___|| | | | __ )|  _ \\ / \\  |  _ \\| | | | \\ | | ____|  _ \\ ",
+        " \\___ \\| | | |  _ \\| |_) / _ \\ | | | | | | |  \\| |  _| | |_) |",
+        "  ___) | |_| | |_) |  __/ ___ \\| |_| | |_| | |\\  | |___|  _ < ",
+        " |____/ \\___/|____/|_| /_/   \\_\\____/ \\___/|_| \\_|_____|_| \\_\\",
+    ],
+    "el": [
+        " __  __       _               _                _             ",
+        "|  \\/  | __ _(_)_ __ ___   __| | ___ _ __   __| | ___  _ __  ",
+        "| |\\/| |/ _` | | '_ ` _ \\ / _` |/ _ \\ '_ \\ / _` |/ _ \\| '_ \\ ",
+        "| |  | | (_| | | | | | | | (_| |  __/ | | | (_| | (_) | | | |",
+        "|_|  |_|\\__,_|_|_| |_| |_|\\__,_|\\___|_| |_|\\__,_|\\___/|_| |_|",
+    ],
+}
+
 MESSAGES: Dict[str, Dict[str, str]] = {
     "en": {
         "banner": "GUESS THE NUMBER",
@@ -100,8 +117,10 @@ def get_guess(prompt: str, error_msg: str) -> int:
             print(error_msg)
 
 
-def print_banner(text: str, min_width: int = 30) -> None:
-    """Display a simple banner for the game."""
+def print_banner(text: str, ascii_lines: Optional[List[str]] = None, min_width: int = 30) -> None:
+    """Display a banner with optional ASCII art."""
+    if ascii_lines:
+        print(Fore.CYAN + "\n".join(ascii_lines))
     width = max(min_width, len(text) + 4)
     top = "╔" + "═" * width + "╗"
     middle = "║" + text.center(width) + "║"
@@ -215,7 +234,8 @@ def main() -> None:
 
     messages = MESSAGES[args.lang]
     banner_text = args.banner if args.banner else messages["banner"]
-    print_banner(banner_text)
+    ascii_lines = ASCII_ART.get(args.lang)
+    print_banner(banner_text, ascii_lines)
     max_attempts = args.attempts if args.attempts > 0 else None
     results: List[GameResult] = []
     played = 0

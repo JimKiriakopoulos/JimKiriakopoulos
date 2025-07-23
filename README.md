@@ -6,7 +6,8 @@ This repository contains a small Python guessing game. To play, run:
 python3 guess_the_number.py
 ```
 
-Use the command-line options to customize gameplay:
+Use the command-line options to customize gameplay. A colorful ASCII-art banner
+appears when the game starts:
 
 - `--min` and `--max` define the range of numbers
 - `--attempts` limits guesses (0 for unlimited)
