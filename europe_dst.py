@@ -2,7 +2,8 @@
 
 This script prints the current time in the chosen zone (``Europe/Athens`` by
 default) and lists all DST changes that will occur within a configurable
-time range (one year by default). Each change is reported with the exact
+time range (one year by default). The search can also be bounded by a specific
+end timestamp via ``--until``. Each change is reported with the exact
 timestamp and whether daylight saving time starts or ends.
 """
 
@@ -14,16 +15,11 @@ import argparse
 import sys
 
 
-def find_dst_transitions(
-    tz_name: str,
-    start: datetime,
-    days: int = 365,
-) -> list[datetime]:
-    """Return all DST transition datetimes within ``days`` days."""
+def find_dst_transitions(tz_name: str, start: datetime, end: datetime) -> list[datetime]:
+    """Return all DST transition datetimes between ``start`` and ``end``."""
 
     tz = ZoneInfo(tz_name)
     current = start.astimezone(tz)
-    end = current + timedelta(days=days)
     step = timedelta(days=1)
     offset = current.utcoffset() or timedelta()
     transitions: list[datetime] = []
@@ -66,6 +62,10 @@ def parse_args() -> argparse.Namespace:
         help="How many days ahead to search",
     )
     parser.add_argument(
+        "--until",
+        help="ISO timestamp to stop searching (overrides --days)",
+    )
+    parser.add_argument(
         "--start",
         help="ISO timestamp to begin searching from",
     )
@@ -88,20 +88,34 @@ def main() -> None:
         start = start.replace(tzinfo=tz) if start.tzinfo is None else start.astimezone(tz)
     else:
         start = datetime.now(tz)
+
+    if args.until:
+        try:
+            end = datetime.fromisoformat(args.until)
+        except ValueError as exc:
+            sys.exit(f"Invalid --until value: {exc}")
+        end = end.replace(tzinfo=tz) if end.tzinfo is None else end.astimezone(tz)
+    else:
+        if args.days < 0:
+            sys.exit("--days must be non-negative")
+        end = start + timedelta(days=args.days)
+
+    if end <= start:
+        sys.exit("--until must be after --start")
+
     print(f"Current time in {tz_name}: {start:%Y-%m-%d %H:%M:%S %Z%z}")
 
-    transitions = find_dst_transitions(tz_name, start, days=args.days)
+    transitions = find_dst_transitions(tz_name, start, end)
     if transitions:
         print("Upcoming DST changes:")
         for trans in transitions:
-            prev_offset = (trans - timedelta(minutes=1)).astimezone(
-                tz
-            ).utcoffset() or timedelta()
+            prev_offset = (trans - timedelta(minutes=1)).astimezone(tz).utcoffset() or timedelta()
             new_offset = trans.utcoffset() or timedelta()
             action = "starts" if new_offset > prev_offset else "ends"
             print(f"  {trans:%Y-%m-%d %H:%M:%S %Z%z} - DST {action}")
     else:
-        print(f"No DST change found in the next {args.days} days.")
+        span = (end - start).days
+        print(f"No DST change found in the next {span} days.")
 
 
 if __name__ == "__main__":
