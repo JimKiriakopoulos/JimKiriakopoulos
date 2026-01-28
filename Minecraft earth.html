@@ -1,0 +1,566 @@
+import React, { useRef, useEffect, useState } from 'react';
+import * as THREE from 'three';
+
+const MinecraftEarthComplete = () => {
+  const mountRef = useRef(null);
+  const [loading, setLoading] = useState(true);
+  const [position, setPosition] = useState({ x: 0, y: 5, z: 5 });
+  const [viewMode, setViewMode] = useState('ground');
+
+  useEffect(() => {
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x87CEEB);
+    scene.fog = new THREE.Fog(0x87CEEB, 0, 150);
+
+    const camera = new THREE.PerspectiveCamera(
+      75,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      2000
+    );
+    camera.position.set(0, 7, 12);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: false });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    mountRef.current.appendChild(renderer.domElement);
+
+    // Lights
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+    scene.add(ambientLight);
+
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+    directionalLight.position.set(50, 50, 50);
+    directionalLight.castShadow = true;
+    directionalLight.shadow.mapSize.width = 1024;
+    directionalLight.shadow.mapSize.height = 1024;
+    scene.add(directionalLight);
+
+    renderer.shadowMap.enabled = true;
+
+    // Stars
+    const starsGeometry = new THREE.BufferGeometry();
+    const starsMaterial = new THREE.PointsMaterial({ color: 0xffffff, size: 2 });
+    const starsVertices = [];
+    for (let i = 0; i < 5000; i++) {
+      const x = (Math.random() - 0.5) * 2000;
+      const y = (Math.random() - 0.5) * 2000;
+      const z = (Math.random() - 0.5) * 2000;
+      starsVertices.push(x, y, z);
+    }
+    starsGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starsVertices, 3));
+    const stars = new THREE.Points(starsGeometry, starsMaterial);
+    stars.visible = false;
+    scene.add(stars);
+
+    // Create block
+    const createBlock = (color, x, y, z) => {
+      const geometry = new THREE.BoxGeometry(1, 1, 1);
+      const edges = new THREE.EdgesGeometry(geometry);
+      const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0x000000, linewidth: 1 }));
+      
+      const material = new THREE.MeshLambertMaterial({ color });
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.add(line);
+      mesh.position.set(x, y, z);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      return mesh;
+    };
+
+    // Terrain
+    const terrainGroup = new THREE.Group();
+    const gridSize = 40;
+    const heightMap = [];
+
+    console.log("Creating terrain...");
+    
+    for (let x = -gridSize; x < gridSize; x++) {
+      heightMap[x] = [];
+      for (let z = -gridSize; z < gridSize; z++) {
+        const height = Math.floor(
+          Math.sin(x * 0.1) * Math.cos(z * 0.1) * 2 +
+          Math.sin(x * 0.05) * Math.cos(z * 0.05) * 3 +
+          1
+        );
+        
+        heightMap[x][z] = height;
+
+        for (let y = 0; y <= height; y++) {
+          let color;
+          if (y === height) {
+            if (height > 5) color = 0xffffff; // Snow
+            else if (height > 3) color = 0x8B7355; // Stone
+            else if (height > 1) color = 0x7CFC00; // Grass
+            else color = 0xF4A460; // Sand
+          } else if (y === height - 1 && height > 1) {
+            color = 0x8B4513; // Dirt
+          } else {
+            color = 0x808080; // Stone
+          }
+          
+          const block = createBlock(color, x, y, z);
+          terrainGroup.add(block);
+        }
+
+        // Water
+        if (height < 0) {
+          for (let y = height + 1; y <= 0; y++) {
+            const waterGeo = new THREE.BoxGeometry(1, 1, 1);
+            const waterMat = new THREE.MeshLambertMaterial({ 
+              color: 0x1E90FF,
+              transparent: true,
+              opacity: 0.6
+            });
+            const water = new THREE.Mesh(waterGeo, waterMat);
+            water.position.set(x, y, z);
+            terrainGroup.add(water);
+          }
+        }
+      }
+    }
+    scene.add(terrainGroup);
+    console.log("Terrain created with", terrainGroup.children.length, "blocks");
+
+    // Trees
+    const createTree = (x, z) => {
+      const baseHeight = heightMap[Math.floor(x)]?.[Math.floor(z)];
+      if (baseHeight === undefined || baseHeight < 1 || baseHeight > 4) return null;
+
+      const treeGroup = new THREE.Group();
+      
+      // Trunk
+      for (let y = 0; y < 4; y++) {
+        const trunk = createBlock(0x8B4513, 0, y, 0);
+        treeGroup.add(trunk);
+      }
+
+      // Leaves
+      for (let dx = -1; dx <= 1; dx++) {
+        for (let dy = 0; dy <= 1; dy++) {
+          for (let dz = -1; dz <= 1; dz++) {
+            if (dx === 0 && dz === 0 && dy === 0) continue;
+            const leaves = createBlock(0x228B22, dx, 4 + dy, dz);
+            treeGroup.add(leaves);
+          }
+        }
+      }
+
+      treeGroup.position.set(x, baseHeight + 1, z);
+      return treeGroup;
+    };
+
+    for (let i = 0; i < 25; i++) {
+      const x = Math.floor((Math.random() - 0.5) * 60);
+      const z = Math.floor((Math.random() - 0.5) * 60);
+      const tree = createTree(x, z);
+      if (tree) {
+        scene.add(tree);
+        console.log("Tree added at", x, z);
+      }
+    }
+
+    // Houses
+    const createHouse = (x, z, color) => {
+      const baseHeight = heightMap[Math.floor(x)]?.[Math.floor(z)];
+      if (baseHeight === undefined || baseHeight < 0 || baseHeight > 4) return null;
+
+      const houseGroup = new THREE.Group();
+      
+      // Walls
+      for (let dx = -2; dx <= 2; dx++) {
+        for (let dz = -2; dz <= 2; dz++) {
+          for (let dy = 0; dy < 3; dy++) {
+            if (Math.abs(dx) === 2 || Math.abs(dz) === 2) {
+              if (!(dx === 0 && dz === -2 && dy < 2)) {
+                const wall = createBlock(color, dx, dy, dz);
+                houseGroup.add(wall);
+              }
+            }
+          }
+        }
+      }
+
+      // Roof
+      for (let dy = 0; dy < 2; dy++) {
+        const size = 2 - dy;
+        for (let dx = -size; dx <= size; dx++) {
+          for (let dz = -size; dz <= size; dz++) {
+            const roof = createBlock(0x8B4513, dx, 3 + dy, dz);
+            houseGroup.add(roof);
+          }
+        }
+      }
+
+      houseGroup.position.set(x, baseHeight + 1, z);
+      return houseGroup;
+    };
+
+    const house1 = createHouse(12, 12, 0xDEB887);
+    const house2 = createHouse(-15, 10, 0xD2691E);
+    const house3 = createHouse(8, -12, 0xF5DEB3);
+    if (house1) scene.add(house1);
+    if (house2) scene.add(house2);
+    if (house3) scene.add(house3);
+
+    // Ships
+    const createShip = (x, y, z) => {
+      const shipGroup = new THREE.Group();
+      
+      // Hull
+      for (let dx = -2; dx <= 2; dx++) {
+        for (let dz = -1; dz <= 1; dz++) {
+          const hull = createBlock(0x8B4513, dx, 0, dz);
+          shipGroup.add(hull);
+        }
+      }
+
+      // Deck
+      for (let dx = -1; dx <= 1; dx++) {
+        for (let dz = -1; dz <= 1; dz++) {
+          const deck = createBlock(0xDEB887, dx, 1, dz);
+          shipGroup.add(deck);
+        }
+      }
+
+      // Mast
+      for (let dy = 0; dy < 3; dy++) {
+        const mast = createBlock(0x654321, 0, 2 + dy, 0);
+        shipGroup.add(mast);
+      }
+
+      shipGroup.position.set(x, y, z);
+      return shipGroup;
+    };
+
+    const ship1 = createShip(20, 1, -3);
+    const ship2 = createShip(-20, 1, 5);
+    scene.add(ship1);
+    scene.add(ship2);
+
+    const ships = [
+      { group: ship1, angle: 0, radius: 20, center: new THREE.Vector3(0, 1, 0) },
+      { group: ship2, angle: Math.PI, radius: 20, center: new THREE.Vector3(0, 1, 0) }
+    ];
+
+    // Mini Earth
+    const earthRadius = 50;
+    const earthGeometry = new THREE.SphereGeometry(earthRadius, 32, 32);
+    const earthMaterial = new THREE.MeshPhongMaterial({ 
+      color: 0x2e6fa8,
+      shininess: 10 
+    });
+    const earth = new THREE.Mesh(earthGeometry, earthMaterial);
+    earth.position.set(0, -150, 0);
+    earth.visible = false;
+    scene.add(earth);
+
+    // Atmosphere
+    const atmosphereGeometry = new THREE.SphereGeometry(earthRadius * 1.15, 32, 32);
+    const atmosphereMaterial = new THREE.MeshBasicMaterial({
+      color: 0x4a90e2,
+      transparent: true,
+      opacity: 0.3,
+      side: THREE.BackSide
+    });
+    const atmosphere = new THREE.Mesh(atmosphereGeometry, atmosphereMaterial);
+    atmosphere.position.set(0, -150, 0);
+    atmosphere.visible = false;
+    scene.add(atmosphere);
+
+    // Satellites
+    const satellites = [];
+    for (let i = 0; i < 3; i++) {
+      const satGroup = new THREE.Group();
+      
+      // Body
+      for (let dx = -1; dx <= 1; dx++) {
+        const body = createBlock(0xcccccc, dx, 0, 0);
+        satGroup.add(body);
+      }
+      
+      // Solar panels
+      const panel1 = createBlock(0x4169E1, -2, 0, 0);
+      const panel2 = createBlock(0x4169E1, 2, 0, 0);
+      satGroup.add(panel1);
+      satGroup.add(panel2);
+      
+      const angle = (i / 3) * Math.PI * 2;
+      const orbitRadius = earthRadius * 1.4;
+      satGroup.position.set(
+        Math.cos(angle) * orbitRadius,
+        -150,
+        Math.sin(angle) * orbitRadius
+      );
+      satGroup.visible = false;
+      
+      scene.add(satGroup);
+      satellites.push({
+        mesh: satGroup,
+        angle: angle,
+        speed: 0.003,
+        orbitRadius: orbitRadius
+      });
+    }
+
+    // Player (Steve)
+    const playerGroup = new THREE.Group();
+    
+    const head = createBlock(0xFFDBAC, 0, 1.8, 0);
+    head.scale.set(0.8, 0.8, 0.8);
+    playerGroup.add(head);
+
+    const body = createBlock(0x00BFFF, 0, 1.2, 0);
+    body.scale.set(0.8, 1.2, 0.4);
+    playerGroup.add(body);
+
+    const leftArm = createBlock(0xFFDBAC, -0.6, 1.2, 0);
+    leftArm.scale.set(0.4, 1.2, 0.4);
+    playerGroup.add(leftArm);
+
+    const rightArm = createBlock(0xFFDBAC, 0.6, 1.2, 0);
+    rightArm.scale.set(0.4, 1.2, 0.4);
+    playerGroup.add(rightArm);
+
+    const leftLeg = createBlock(0x0000CD, -0.3, 0.5, 0);
+    leftLeg.scale.set(0.4, 1, 0.4);
+    playerGroup.add(leftLeg);
+
+    const rightLeg = createBlock(0x0000CD, 0.3, 0.5, 0);
+    rightLeg.scale.set(0.4, 1, 0.4);
+    playerGroup.add(rightLeg);
+
+    playerGroup.position.set(0, 5, 5);
+    scene.add(playerGroup);
+
+    // Controls
+    const keys = {};
+    const moveSpeed = 0.2;
+    const jumpSpeed = 0.3;
+    let velocityY = 0;
+    let isJumping = false;
+
+    document.addEventListener('keydown', (e) => {
+      keys[e.code] = true;
+      if (e.code === 'Space' && !isJumping && viewMode === 'ground') {
+        velocityY = jumpSpeed;
+        isJumping = true;
+      }
+    });
+
+    document.addEventListener('keyup', (e) => {
+      keys[e.code] = false;
+    });
+
+    let mouseX = 0;
+    let mouseY = 0;
+    let onMouseDown = false;
+
+    document.addEventListener('mousedown', () => {
+      onMouseDown = true;
+    });
+
+    document.addEventListener('mouseup', () => {
+      onMouseDown = false;
+    });
+
+    document.addEventListener('mousemove', (e) => {
+      if (onMouseDown) {
+        mouseX += e.movementX * 0.002;
+        mouseY -= e.movementY * 0.002;
+        mouseY = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, mouseY));
+      }
+    });
+
+    setLoading(false);
+
+    let animationTime = 0;
+    const animate = () => {
+      requestAnimationFrame(animate);
+      animationTime += 0.1;
+
+      if (viewMode === 'ground') {
+        scene.background = new THREE.Color(0x87CEEB);
+        scene.fog.far = 150;
+        stars.visible = false;
+        earth.visible = false;
+        atmosphere.visible = false;
+        satellites.forEach(sat => sat.mesh.visible = false);
+        terrainGroup.visible = true;
+        playerGroup.visible = true;
+
+        // Movement
+        const forward = new THREE.Vector3(0, 0, -1);
+        const right = new THREE.Vector3(1, 0, 0);
+        
+        forward.applyAxisAngle(new THREE.Vector3(0, 1, 0), mouseX);
+        right.applyAxisAngle(new THREE.Vector3(0, 1, 0), mouseX);
+
+        if (keys['KeyW'] || keys['ArrowUp']) {
+          playerGroup.position.add(forward.clone().multiplyScalar(moveSpeed));
+        }
+        if (keys['KeyS'] || keys['ArrowDown']) {
+          playerGroup.position.add(forward.clone().multiplyScalar(-moveSpeed));
+        }
+        if (keys['KeyA'] || keys['ArrowLeft']) {
+          playerGroup.position.add(right.clone().multiplyScalar(-moveSpeed));
+        }
+        if (keys['KeyD'] || keys['ArrowRight']) {
+          playerGroup.position.add(right.clone().multiplyScalar(moveSpeed));
+        }
+
+        velocityY -= 0.02;
+        playerGroup.position.y += velocityY;
+
+        const groundY = 5;
+        if (playerGroup.position.y <= groundY) {
+          playerGroup.position.y = groundY;
+          velocityY = 0;
+          isJumping = false;
+        }
+
+        playerGroup.rotation.y = mouseX;
+
+        // Animate limbs
+        if (keys['KeyW'] || keys['KeyS'] || keys['KeyA'] || keys['KeyD']) {
+          leftArm.rotation.x = Math.sin(animationTime * 0.5) * 0.5;
+          rightArm.rotation.x = -Math.sin(animationTime * 0.5) * 0.5;
+          leftLeg.rotation.x = -Math.sin(animationTime * 0.5) * 0.5;
+          rightLeg.rotation.x = Math.sin(animationTime * 0.5) * 0.5;
+        } else {
+          leftArm.rotation.x = 0;
+          rightArm.rotation.x = 0;
+          leftLeg.rotation.x = 0;
+          rightLeg.rotation.x = 0;
+        }
+
+        // Camera
+        const cameraDistance = 8;
+        const cameraHeight = 4;
+        const cameraOffset = new THREE.Vector3(0, 0, cameraDistance);
+        cameraOffset.applyAxisAngle(new THREE.Vector3(0, 1, 0), mouseX);
+        
+        camera.position.x = playerGroup.position.x + cameraOffset.x;
+        camera.position.z = playerGroup.position.z + cameraOffset.z;
+        camera.position.y = playerGroup.position.y + cameraHeight;
+        camera.lookAt(playerGroup.position.x, playerGroup.position.y + 1, playerGroup.position.z);
+
+        // Ships
+        ships.forEach(ship => {
+          ship.angle += 0.003;
+          const newX = Math.cos(ship.angle) * ship.radius;
+          const newZ = Math.sin(ship.angle) * ship.radius;
+          ship.group.position.x = newX;
+          ship.group.position.z = newZ;
+        });
+
+        setPosition({
+          x: Math.round(playerGroup.position.x),
+          y: Math.round(playerGroup.position.y),
+          z: Math.round(playerGroup.position.z)
+        });
+
+      } else {
+        scene.background = new THREE.Color(0x000011);
+        scene.fog.far = 2000;
+        stars.visible = true;
+        earth.visible = true;
+        atmosphere.visible = true;
+        satellites.forEach(sat => sat.mesh.visible = true);
+        terrainGroup.visible = false;
+        playerGroup.visible = false;
+
+        earth.rotation.y += 0.002;
+        atmosphere.rotation.y += 0.002;
+
+        satellites.forEach(sat => {
+          sat.angle += sat.speed;
+          sat.mesh.position.x = Math.cos(sat.angle) * sat.orbitRadius;
+          sat.mesh.position.z = Math.sin(sat.angle) * sat.orbitRadius;
+          sat.mesh.lookAt(earth.position);
+        });
+
+        const orbitRadius = 130;
+        camera.position.x = Math.cos(animationTime * 0.005) * orbitRadius;
+        camera.position.y = -100;
+        camera.position.z = Math.sin(animationTime * 0.005) * orbitRadius;
+        camera.lookAt(earth.position);
+      }
+
+      renderer.render(scene, camera);
+    };
+    animate();
+
+    const handleResize = () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    };
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (mountRef.current && renderer.domElement) {
+        mountRef.current.removeChild(renderer.domElement);
+      }
+      renderer.dispose();
+    };
+  }, [viewMode]);
+
+  return (
+    <div className="relative w-full h-screen overflow-hidden">
+      <div ref={mountRef} className="w-full h-full" />
+      
+      {loading && (
+        <div className="absolute inset-0 flex items-center justify-center text-white text-2xl bg-green-900">
+          Φόρτωση κόσμου...
+        </div>
+      )}
+      
+      <div className="absolute top-4 left-4 bg-black bg-opacity-80 text-white p-4 rounded-lg border-4 border-gray-600" style={{ fontFamily: 'monospace' }}>
+        <h2 className="text-xl font-bold mb-2 text-green-400">⛏️ MINECRAFT ΓΗ</h2>
+        <div className="space-y-1 text-sm">
+          <p className="font-bold text-yellow-300">
+            {viewMode === 'ground' ? '🏃 ΕΔΑΦΟΣ' : '🚀 ΔΙΑΣΤΗΜΑ'}
+          </p>
+          {viewMode === 'ground' ? (
+            <>
+              <p>🎮 W/A/S/D - Κίνηση</p>
+              <p>🖱️ Κλικ+Σύρσιμο - Κοίταξε</p>
+              <p>⬆️ SPACE - Πήδημα</p>
+              <div className="mt-2 pt-2 border-t border-gray-600">
+                <p className="text-cyan-300">📍 Θέση:</p>
+                <p>X: {position.x}</p>
+                <p>Y: {position.y}</p>
+                <p>Z: {position.z}</p>
+              </div>
+            </>
+          ) : (
+            <>
+              <p>🌍 Γη από διάστημα</p>
+              <p>🛰️ Δορυφόροι</p>
+              <p>⭐ 5000 αστέρια</p>
+            </>
+          )}
+        </div>
+      </div>
+
+      <div className="absolute top-4 right-4">
+        <button 
+          onClick={() => setViewMode(viewMode === 'ground' ? 'space' : 'ground')}
+          className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-lg border-4 border-purple-800 text-lg"
+          style={{ fontFamily: 'monospace' }}
+        >
+          {viewMode === 'ground' ? '🚀 ΔΙΑΣΤΗΜΑ' : '🏃 ΕΔΑΦΟΣ'}
+        </button>
+      </div>
+
+      {viewMode === 'ground' && (
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none">
+          <div className="text-white text-4xl opacity-50">+</div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default MinecraftEarthComplete;
