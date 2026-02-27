@@ -112,6 +112,11 @@ public sealed class ExpenseService
         DateTime? to = null,
         IReadOnlyCollection<string>? categories = null)
     {
+        if (from.HasValue && to.HasValue && from.Value.Date > to.Value.Date)
+        {
+            throw new ArgumentException("The 'from' date cannot be later than the 'to' date.");
+        }
+
         var filtered = FilterExpenses(_repository.Load(), from, to, categories);
         var total = filtered.Sum(expense => expense.Amount);
         var count = filtered.Count;

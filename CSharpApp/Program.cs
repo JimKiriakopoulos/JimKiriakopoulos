@@ -306,6 +306,11 @@ internal static class Program
             throw new FormatException($"The value '{raw}' is not a valid identifier for the '--{name}' option.");
         }
 
+        if (id == Guid.Empty)
+        {
+            throw new FormatException($"The value '{raw}' is not a valid identifier for the '--{name}' option.");
+        }
+
         return id;
     }
 
