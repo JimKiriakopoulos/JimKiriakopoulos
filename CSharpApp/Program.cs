@@ -67,6 +67,8 @@ internal static class Program
 
     private static void HandleAdd(ExpenseService service, CommandLineInput input)
     {
+        EnsureAllowedOptions(input, "date", "category", "amount", "description");
+
         var date = GetRequiredDate(input, "date");
         var category = GetRequiredString(input, "category");
         var amount = GetRequiredDecimal(input, "amount");
@@ -87,6 +89,8 @@ internal static class Program
 
     private static void HandleList(ExpenseService service, CommandLineInput input)
     {
+        EnsureAllowedOptions(input, "from", "to", "category");
+
         var from = GetOptionalDate(input, "from");
         var to = GetOptionalDate(input, "to");
         var categories = GetOptionalCategories(input);
@@ -118,6 +122,8 @@ internal static class Program
 
     private static void HandleSummary(ExpenseService service, CommandLineInput input)
     {
+        EnsureAllowedOptions(input, "from", "to", "category");
+
         var from = GetOptionalDate(input, "from");
         var to = GetOptionalDate(input, "to");
         var categories = GetOptionalCategories(input);
@@ -171,6 +177,8 @@ internal static class Program
 
     private static void HandleRemove(ExpenseService service, CommandLineInput input)
     {
+        EnsureAllowedOptions(input, "id");
+
         var id = GetRequiredGuid(input, "id");
         var removed = service.RemoveExpense(id);
         if (removed)
@@ -312,6 +320,23 @@ internal static class Program
         }
 
         return id;
+    }
+
+    private static void EnsureAllowedOptions(CommandLineInput input, params string[] allowedOptions)
+    {
+        var allowed = new HashSet<string>(allowedOptions, StringComparer.OrdinalIgnoreCase);
+        var unexpected = input.Options.Keys
+            .Where(key => !allowed.Contains(key))
+            .OrderBy(key => key, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        if (unexpected.Count == 0)
+        {
+            return;
+        }
+
+        throw new ArgumentException(
+            $"Unsupported option(s) for '{input.Command}': {string.Join(", ", unexpected.Select(key => $"--{key}"))}.");
     }
 
     private static IReadOnlyCollection<string>? GetOptionalCategories(CommandLineInput input)

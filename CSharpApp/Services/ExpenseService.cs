@@ -94,6 +94,11 @@ public sealed class ExpenseService
     /// </summary>
     public bool RemoveExpense(Guid id)
     {
+        if (id == Guid.Empty)
+        {
+            throw new ArgumentException("The expense identifier cannot be empty.", nameof(id));
+        }
+
         var expenses = _repository.Load();
         var removed = expenses.RemoveAll(expense => expense.Id == id) > 0;
         if (removed)

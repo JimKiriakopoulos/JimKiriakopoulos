@@ -34,7 +34,21 @@ public static class CommandLineParser
                 throw new ArgumentException($"Unexpected token '{token}'. Options must start with \"--\".");
             }
 
-            var key = token[2..];
+            var optionToken = token[2..];
+            var equalsIndex = optionToken.IndexOf('=');
+
+            string key;
+            string? inlineValue = null;
+            if (equalsIndex >= 0)
+            {
+                key = optionToken[..equalsIndex];
+                inlineValue = optionToken[(equalsIndex + 1)..];
+            }
+            else
+            {
+                key = optionToken;
+            }
+
             if (string.IsNullOrWhiteSpace(key))
             {
                 throw new ArgumentException("Option names cannot be empty.");
@@ -46,7 +60,11 @@ public static class CommandLineParser
             }
 
             string value;
-            if (index + 1 < args.Length && !args[index + 1].StartsWith("--", StringComparison.Ordinal))
+            if (inlineValue is not null)
+            {
+                value = inlineValue;
+            }
+            else if (index + 1 < args.Length && !args[index + 1].StartsWith("--", StringComparison.Ordinal))
             {
                 value = args[++index];
             }
