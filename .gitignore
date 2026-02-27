@@ -1,0 +1,9 @@
+# Build output directories
+**/bin/
+**/obj/
+
+# Visual Studio working files
+.vs/
+
+# User generated data created by the expense tracker
+CSharpApp/data/expenses.json
